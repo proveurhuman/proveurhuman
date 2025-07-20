@@ -183,36 +183,50 @@
     </p>
   </footer>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
   <script>
-    // Ensure DOM is fully loaded
     console.log('Script loaded');
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM fully loaded');
 
-      // Firebase Configuration
-      const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "proveurhuman-12wqe.firebaseapp.com",
-        databaseURL: "https://proveurhuman-12wqe-default-rtdb.firebaseio.com",
-        projectId: "proveurhuman-12wqe",
-        storageBucket: "proveurhuman-12wqe.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-      };
-      try {
-        firebase.initializeApp(firebaseConfig);
-        console.log('Firebase initialized');
-      } catch (err) {
-        console.error('Firebase initialization error:', err);
-      }
-      const database = firebase.database();
+      // Select DOM elements
+      const startButton = document.querySelector('#start-button');
+      const privacyNotice = document.querySelector('.privacy-notice');
+      const gameMenu = document.querySelector('#game-menu');
+      const gameArea = document.querySelector('#game-area');
 
-      // Generate unique user ID
-      let userId = localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('userId', userId);
-      console.log('User ID:', userId);
+      // Debug: Check if elements are found
+      if (!startButton) console.error('Start button not found');
+      if (!privacyNotice) console.error('Privacy notice not found');
+      if (!gameMenu) console.error('Game menu not found');
+      if (!gameArea) console.error('Game area not found');
+
+      // Start button logic
+      if (startButton) {
+        startButton.addEventListener('click', () => {
+          console.log('Start button clicked');
+          localStorage.setItem('privacyAccepted', 'true');
+          startButton.style.display = 'none';
+          privacyNotice.style.display = 'none';
+          gameMenu.style.display = 'grid';
+          gameArea.style.display = 'none';
+          console.log('Game menu displayed');
+        });
+      }
+
+      // Initialize page state
+      if (localStorage.getItem('privacyAccepted') === 'true') {
+        console.log('Privacy already accepted');
+        startButton.style.display = 'none';
+        privacyNotice.style.display = 'none';
+        gameMenu.style.display = 'grid';
+        gameArea.style.display = 'none';
+      } else {
+        console.log('Privacy not accepted');
+        startButton.style.display = 'block';
+        privacyNotice.style.display = 'block';
+        gameMenu.style.display = 'none';
+        gameArea.style.display = 'none';
+      }
 
       // Game progress
       let gameProgress = JSON.parse(localStorage.getItem('gameProgress')) || {
@@ -244,58 +258,6 @@
         updateGameMenu();
       }
 
-      // Log user action to Firebase
-      function logAction(gameId, level, action, success, details) {
-        console.log('Logging action:', { gameId, level, action, success, details });
-        const ref = database.ref('user_actions');
-        ref.push({
-          userId: userId,
-          gameId: gameId,
-          level: level,
-          action: action,
-          success: success,
-          timestamp: Date.now(),
-          details: details
-        }).catch(err => console.error('Error saving data:', err));
-      }
-
-      // Start button logic
-      const startButton = document.getElementById('start-button');
-      const privacyNotice = document.querySelector('.privacy-notice');
-      const gameMenu = document.getElementById('game-menu');
-      const gameArea = document.getElementById('game-area');
-
-      if (!startButton) {
-        console.error('Start button not found');
-      } else {
-        console.log('Start button found');
-        startButton.addEventListener('click', () => {
-          console.log('Start button clicked');
-          localStorage.setItem('privacyAccepted', 'true');
-          logAction('privacy', 0, 'accept', true, {});
-          startButton.style.display = 'none';
-          privacyNotice.style.display = 'none';
-          gameMenu.style.display = 'grid';
-          gameArea.style.display = 'none';
-          logAction('game', 0, 'start_menu', true, {});
-        });
-      }
-
-      // Initialize page state
-      console.log('Initializing page, privacyAccepted:', localStorage.getItem('privacyAccepted'));
-      if (localStorage.getItem('privacyAccepted') === 'true') {
-        startButton.style.display = 'none';
-        privacyNotice.style.display = 'none';
-        gameMenu.style.display = 'grid';
-        gameArea.style.display = 'none';
-      } else {
-        startButton.style.display = 'block';
-        privacyNotice.style.display = 'block';
-        gameMenu.style.display = 'none';
-        gameArea.style.display = 'none';
-      }
-      updateGameMenu();
-
       // Game logic for Pattern Recognition
       let currentGame = null;
       let currentLevel = 1;
@@ -303,32 +265,29 @@
       let gameActive = false;
       let pattern = null;
       let timeoutId = null;
-      const canvas = document.getElementById('game-canvas');
+      const canvas = document.querySelector('#game-canvas');
       const ctx = canvas.getContext('2d');
-      const stopButton = document.getElementById('stop-button');
+      const stopButton = document.querySelector('#stop-button');
 
       function selectGame(gameId) {
         console.log('Selecting game:', gameId);
         if (localStorage.getItem('privacyAccepted') !== 'true') {
           alert('Please agree to the Privacy Policy by clicking Start.');
-          logAction('game', 0, 'select_game_attempt', false, { gameId });
           return;
         }
         currentGame = gameId;
         currentLevel = gameProgress[gameId].level;
         gameMenu.style.display = 'none';
         gameArea.style.display = 'block';
-        document.getElementById('game-title').textContent = gameId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        document.getElementById('level-display').textContent = `Level ${currentLevel}`;
-        document.getElementById('score-display').textContent = `Score: ${score}`;
+        document.querySelector('#game-title').textContent = gameId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        document.querySelector('#level-display').textContent = `Level ${currentLevel}`;
+        document.querySelector('#score-display').textContent = `Score: ${score}`;
         if (gameId === 'pattern-recognition') {
           setupPatternRecognition();
         } else {
-          // Placeholder for other games
           console.log(`Game ${gameId} not implemented yet`);
           alert(`Game "${gameId}" is not implemented yet. Please try Pattern Recognition.`);
         }
-        logAction(gameId, currentLevel, 'start', true, {});
       }
 
       function setupPatternRecognition() {
@@ -339,20 +298,18 @@
         stopButton.onclick = stopGame;
         canvas.onclick = (e) => handlePatternClick(e, pattern);
         gameActive = true;
-        const timeLimit = 10000 - currentLevel * 1000; // Decrease time with level
+        const timeLimit = 10000 - currentLevel * 1000;
         timeoutId = setTimeout(() => {
           if (gameActive) {
-            logAction('pattern-recognition', currentLevel, 'timeout', false, { timeLimit });
             score = Math.max(0, score - 5);
-            document.getElementById('score-display').textContent = `Score: ${score}`;
+            document.querySelector('#score-display').textContent = `Score: ${score}`;
             setupPatternRecognition();
           }
         }, timeLimit);
-        logAction('pattern-recognition', currentLevel, 'setup', true, { timeLimit });
       }
 
       function generatePattern(level) {
-        const size = 3 + Math.floor(level / 3); // Increase grid size
+        const size = 3 + Math.floor(level / 3);
         const pattern = [];
         for (let i = 0; i < size * size; i++) {
           pattern.push(Math.random() > 0.5 ? '#f107a3' : '#7b2ff7');
@@ -383,12 +340,6 @@
         const index = row * pattern.size + col;
         const selectedColor = pattern.colors[index];
         const success = selectedColor === pattern.correct;
-        logAction('pattern-recognition', currentLevel, 'click', success, {
-          x: x / canvas.width,
-          y: y / canvas.height,
-          selectedColor,
-          correctColor: pattern.correct
-        });
         if (success) {
           score += 10;
           if (currentLevel < 10) {
@@ -407,8 +358,8 @@
           score = Math.max(0, score - 5);
           setupPatternRecognition();
         }
-        document.getElementById('score-display').textContent = `Score: ${score}`;
-        document.getElementById('level-display').textContent = `Level ${currentLevel}`;
+        document.querySelector('#score-display').textContent = `Score: ${score}`;
+        document.querySelector('#level-display').textContent = `Level ${currentLevel}`;
       }
 
       function unlockNextGame() {
@@ -427,7 +378,6 @@
         gameActive = false;
         gameMenu.style.display = 'grid';
         gameArea.style.display = 'none';
-        logAction(currentGame, currentLevel, 'stop', true, {});
       }
 
       // Initialize game buttons
