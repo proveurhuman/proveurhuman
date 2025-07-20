@@ -31,8 +31,8 @@
     main {
       padding: 2rem;
     }
-    .start-btn {
-      margin-top: 2rem;
+    .start-btn, .game-button {
+      margin: 1rem;
       padding: 1rem 2rem;
       font-size: 1.1rem;
       background: #f107a3;
@@ -42,8 +42,60 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    .start-btn:hover {
+    .start-btn:hover, .game-button:hover:not(:disabled) {
       background: #c00584;
+    }
+    .game-button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .game-menu {
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      max-width: 900px;
+      margin: 2rem auto;
+    }
+    #game-area {
+      display: none;
+      max-width: 900px;
+      margin: 2rem auto;
+      background: #222;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    #game-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #f0f0f0;
+    }
+    #level-display {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    #game-canvas {
+      border: 2px solid #f107a3;
+      border-radius: 8px;
+      margin: 0 auto;
+      display: block;
+      background: #fff;
+    }
+    #score-display {
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+    #stop-button {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #stop-button:hover {
+      background: #b02a37;
     }
     footer {
       margin-top: 4rem;
@@ -57,7 +109,6 @@
     a:hover {
       text-decoration: underline;
     }
-    /* Modal styles */
     #privacyModal {
       display: none;
       position: fixed;
@@ -100,7 +151,6 @@
       background-color: #f44336;
       color: white;
     }
-    /* Beta notice box */
     #betaNotice {
       background-color: #222;
       color: #eee;
@@ -108,7 +158,6 @@
       border-radius: 8px;
       max-width: 600px;
       margin: 40px auto 20px auto;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
       line-height: 1.4;
     }
@@ -123,6 +172,25 @@
   <main>
     <p>Are you ready to take on the challenge and beat the system?</p>
     <button class="start-btn" onclick="startGame()">Start</button>
+    <div class="game-menu" id="game-menu">
+      <button class="game-button" data-game="pattern-recognition">Pattern Recognition</button>
+      <button class="game-button" data-game="image-distortion" disabled>Image Distortion</button>
+      <button class="game-button" data-game="audio-tone" disabled>Audio Tone</button>
+      <button class="game-button" data-game="visual-memory" disabled>Visual Memory</button>
+      <button class="game-button" data-game="reaction-time" disabled>Reaction Time</button>
+      <button class="game-button" data-game="captcha-puzzle" disabled>Captcha Puzzle</button>
+      <button class="game-button" data-game="logical-reasoning" disabled>Logical Reasoning</button>
+      <button class="game-button" data-game="color-gradient" disabled>Color Gradient</button>
+      <button class="game-button" data-game="shape-rotation" disabled>Shape Rotation</button>
+      <button class="game-button" data-game="sequence-prediction" disabled>Sequence Prediction</button>
+    </div>
+    <div id="game-area">
+      <h2 id="game-title"></h2>
+      <div id="level-display"></div>
+      <canvas id="game-canvas" width="400" height="400"></canvas>
+      <div id="score-display"></div>
+      <button id="stop-button">Stop</button>
+    </div>
   </main>
 
   <div id="betaNotice">
@@ -141,7 +209,6 @@
     </p>
   </footer>
 
-  <!-- Modal for Privacy Policy Acceptance -->
   <div id="privacyModal">
     <div>
       <h2>Privacy Policy Acceptance</h2>
@@ -152,12 +219,10 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
-
   <script>
-    // Replace these values with your Firebase project config
+    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "proveurhuman-12wqe.firebaseapp.com",
@@ -167,17 +232,53 @@
       messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
       appId: "YOUR_APP_ID"
     };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // Save data example function (you can customize this)
-    function saveUserData(data) {
-      const ref = database.ref('userData');
-      ref.push(data)
-        .then(() => console.log('Data saved successfully!'))
-        .catch(err => console.error('Error saving data:', err));
+    // Generate unique user ID
+    let userId = localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('userId', userId);
+
+    // Game progress
+    let gameProgress = JSON.parse(localStorage.getItem('gameProgress')) || {
+      'pattern-recognition': { level: 1, unlocked: true },
+      'image-distortion': { level: 1, unlocked: false },
+      'audio-tone': { level: 1, unlocked: false },
+      'visual-memory': { level: 1, unlocked: false },
+      'reaction-time': { level: 1, unlocked: false },
+      'captcha-puzzle': { level: 1, unlocked: false },
+      'logical-reasoning': { level: 1, unlocked: false },
+      'color-gradient': { level: 1, unlocked: false },
+      'shape-rotation': { level: 1, unlocked: false },
+      'sequence-prediction': { level: 1, unlocked: false }
+    };
+
+    // Update game menu based on progress
+    function updateGameMenu() {
+      document.querySelectorAll('.game-button').forEach(button => {
+        const gameId = button.dataset.game;
+        button.disabled = !gameProgress[gameId].unlocked;
+      });
+    }
+
+    // Save progress to localStorage
+    function saveProgress() {
+      localStorage.setItem('gameProgress', JSON.stringify(gameProgress));
+      updateGameMenu();
+    }
+
+    // Log user action to Firebase
+    function logAction(gameId, level, action, success, details) {
+      const ref = database.ref('user_actions');
+      ref.push({
+        userId: userId,
+        gameId: gameId,
+        level: level,
+        action: action,
+        success: success,
+        timestamp: Date.now(),
+        details: details
+      }).catch(err => console.error('Error saving data:', err));
     }
 
     // Privacy Modal logic
@@ -188,12 +289,9 @@
 
     function startGame() {
       if (localStorage.getItem('privacyAccepted') === 'true') {
-        alert("Level system not implemented yet. Stay tuned!");
-        // TODO: Here you can redirect to the first game level page if implemented
-        // window.location.href = "/funverify/level1.html";
-        
-        // Example: Save test data to Firebase on start
-        saveUserData({ event: 'game_started', timestamp: Date.now() });
+        document.getElementById('game-menu').style.display = 'grid';
+        document.querySelector('.start-btn').style.display = 'none';
+        logAction('game', 0, 'start_menu', true, {});
       } else {
         privacyModal.style.display = 'flex';
       }
@@ -202,8 +300,8 @@
     acceptBtn.addEventListener('click', () => {
       localStorage.setItem('privacyAccepted', 'true');
       privacyModal.style.display = 'none';
-      alert("Thank you for accepting the Privacy Policy. The game will start now.");
       startGame();
+      logAction('privacy', 0, 'accept', true, {});
     });
 
     viewBtn.addEventListener('click', () => {
@@ -213,6 +311,143 @@
     declineBtn.addEventListener('click', () => {
       privacyModal.style.display = 'none';
       alert("You must accept the Privacy Policy to play the game.");
+      logAction('privacy', 0, 'decline', false, {});
+    });
+
+    // Game logic for Pattern Recognition
+    let currentGame = null;
+    let currentLevel = 1;
+    let score = 0;
+    let gameActive = false;
+    let pattern = null;
+    let timeoutId = null;
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const stopButton = document.getElementById('stop-button');
+
+    function selectGame(gameId) {
+      if (localStorage.getItem('privacyAccepted') !== 'true') {
+        privacyModal.style.display = 'flex';
+        return;
+      }
+      currentGame = gameId;
+      currentLevel = gameProgress[gameId].level;
+      document.getElementById('game-menu').style.display = 'none';
+      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('game-title').textContent = gameId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      document.getElementById('level-display').textContent = `Level ${currentLevel}`;
+      document.getElementById('score-display').textContent = `Score: ${score}`;
+      if (gameId === 'pattern-recognition') {
+        setupPatternRecognition();
+      }
+      // Add other game setups here
+      logAction(gameId, currentLevel, 'start', true, {});
+    }
+
+    function setupPatternRecognition() {
+      canvas.innerHTML = '';
+      pattern = generatePattern(currentLevel);
+      drawPattern(pattern);
+      stopButton.onclick = stopGame;
+      canvas.onclick = (e) => handlePatternClick(e, pattern);
+      gameActive = true;
+      // Start timer for level
+      const timeLimit = 10000 - currentLevel * 1000; // Decrease time with level
+      timeoutId = setTimeout(() => {
+        if (gameActive) {
+          logAction('pattern-recognition', currentLevel, 'timeout', false, { timeLimit });
+          score = Math.max(0, score - 5);
+          document.getElementById('score-display').textContent = `Score: ${score}`;
+          setupPatternRecognition();
+        }
+      }, timeLimit);
+      logAction('pattern-recognition', currentLevel, 'setup', true, { timeLimit });
+    }
+
+    function generatePattern(level) {
+      const size = 3 + Math.floor(level / 3); // Increase grid size
+      const pattern = [];
+      for (let i = 0; i < size * size; i++) {
+        pattern.push(Math.random() > 0.5 ? '#f107a3' : '#7b2ff7');
+      }
+      return { size, colors: pattern, correct: pattern[Math.floor(Math.random() * pattern.length)] };
+    }
+
+    function drawPattern(pattern) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cellSize = canvas.width / pattern.size;
+      for (let i = 0; i < pattern.colors.length; i++) {
+        const x = (i % pattern.size) * cellSize;
+        const y = Math.floor(i / pattern.size) * cellSize;
+        ctx.fillStyle = pattern.colors[i];
+        ctx.fillRect(x, y, cellSize - 2, cellSize - 2);
+      }
+    }
+
+    function handlePatternClick(e, pattern) {
+      if (!gameActive) return;
+      clearTimeout(timeoutId);
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const cellSize = canvas.width / pattern.size;
+      const col = Math.floor(x / cellSize);
+      const row = Math.floor(y / cellSize);
+      const index = row * pattern.size + col;
+      const selectedColor = pattern.colors[index];
+      const success = selectedColor === pattern.correct;
+      logAction('pattern-recognition', currentLevel, 'click', success, {
+        x: x / canvas.width,
+        y: y / canvas.height,
+        selectedColor,
+        correctColor: pattern.correct
+      });
+      if (success) {
+        score += 10;
+        if (currentLevel < 10) {
+          currentLevel++;
+          gameProgress[currentGame].level = currentLevel;
+          if (currentLevel === 10) {
+            unlockNextGame();
+          }
+          saveProgress();
+          setupPatternRecognition();
+        } else {
+          alert('Game Completed!');
+          stopGame();
+        }
+      } else {
+        score = Math.max(0, score - 5);
+        setupPatternRecognition();
+      }
+      document.getElementById('score-display').textContent = `Score: ${score}`;
+      document.getElementById('level-display').textContent = `Level ${currentLevel}`;
+    }
+
+    function unlockNextGame() {
+      const games = Object.keys(gameProgress);
+      const currentIndex = games.indexOf(currentGame);
+      if (currentIndex < games.length - 1) {
+        gameProgress[games[currentIndex + 1]].unlocked = true;
+      }
+      saveProgress();
+    }
+
+    function stopGame() {
+      clearTimeout(timeoutId);
+      gameActive = false;
+      document.getElementById('game-menu').style.display = 'grid';
+      document.getElementById('game-area').style.display = 'none';
+      logAction(currentGame, currentLevel, 'stop', true, {});
+    }
+
+    // Initialize
+    if (localStorage.getItem('privacyAccepted') === 'true') {
+      document.querySelector('.start-btn').style.display = 'block';
+    }
+    updateGameMenu();
+    document.querySelectorAll('.game-button').forEach(button => {
+      button.onclick = () => selectGame(button.dataset.game);
     });
   </script>
 </body>
