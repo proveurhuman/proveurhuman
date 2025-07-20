@@ -45,10 +45,6 @@
     .start-btn:hover, .game-button:hover:not(:disabled) {
       background: #c00584;
     }
-    .start-btn:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
     .game-button:disabled {
       background: #555;
       cursor: not-allowed;
@@ -123,30 +119,17 @@
       text-align: center;
       line-height: 1.4;
     }
-    .privacy-container {
+    .privacy-notice {
       max-width: 600px;
-      margin: 1rem auto;
-      padding: 1rem;
-      background: #222;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      margin: 0.5rem auto;
+      font-size: 0.9rem;
+      color: #ccc;
     }
-    .privacy-container input[type="checkbox"] {
-      transform: scale(1.5);
-      margin-right: 10px;
-    }
-    .privacy-container label {
-      font-size: 1rem;
-      color: #f0f0f0;
-    }
-    .privacy-container a {
+    .privacy-notice a {
       color: #6cf;
       text-decoration: underline;
     }
-    .privacy-container a:hover {
+    .privacy-notice a:hover {
       color: #8ab4f8;
     }
   </style>
@@ -159,11 +142,10 @@
 
   <main>
     <p>Are you ready to take on the challenge and beat the system?</p>
-    <div class="privacy-container" id="privacy-container">
-      <input type="checkbox" id="privacyCheckbox">
-      <label for="privacyCheckbox">I accept the <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a></label>
+    <button class="start-btn" id="start-button">Start</button>
+    <div class="privacy-notice">
+      By clicking Start, you agree to our <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
     </div>
-    <button class="start-btn" id="start-button" disabled>Start</button>
     <div class="game-menu" id="game-menu">
       <button class="game-button" data-game="pattern-recognition">Pattern Recognition</button>
       <button class="game-button" data-game="image-distortion" disabled>Image Distortion</button>
@@ -269,63 +251,38 @@
         }).catch(err => console.error('Error saving data:', err));
       }
 
-      // Privacy Checkbox logic
-      const privacyCheckbox = document.getElementById('privacyCheckbox');
+      // Start button logic
       const startButton = document.getElementById('start-button');
-      const privacyContainer = document.getElementById('privacy-container');
-
-      if (!privacyCheckbox) console.error('Privacy checkbox not found');
-      if (!startButton) console.error('Start button not found');
-      if (!privacyContainer) console.error('Privacy container not found');
+      if (!startButton) {
+        console.error('Start button not found');
+      } else {
+        startButton.addEventListener('click', () => {
+          console.log('Start button clicked');
+          localStorage.setItem('privacyAccepted', 'true');
+          logAction('privacy', 0, 'accept', true, {});
+          startButton.style.display = 'none';
+          document.querySelector('.privacy-notice').style.display = 'none';
+          document.getElementById('game-menu').style.display = 'grid';
+          document.getElementById('game-area').style.display = 'none';
+          logAction('game', 0, 'start_menu', true, {});
+        });
+      }
 
       // Initialize page state
       if (localStorage.getItem('privacyAccepted') === 'true') {
         console.log('Privacy already accepted');
-        privacyCheckbox.checked = true;
-        startButton.disabled = false;
         startButton.style.display = 'block';
-        privacyContainer.style.display = 'flex';
+        document.querySelector('.privacy-notice').style.display = 'none';
         document.getElementById('game-menu').style.display = 'none';
         document.getElementById('game-area').style.display = 'none';
       } else {
         console.log('Privacy not accepted');
-        privacyCheckbox.checked = false;
-        startButton.disabled = true;
         startButton.style.display = 'block';
-        privacyContainer.style.display = 'flex';
+        document.querySelector('.privacy-notice').style.display = 'block';
         document.getElementById('game-menu').style.display = 'none';
         document.getElementById('game-area').style.display = 'none';
       }
       updateGameMenu();
-
-      // Checkbox event listener
-      privacyCheckbox.addEventListener('change', () => {
-        console.log('Checkbox changed, checked:', privacyCheckbox.checked);
-        if (privacyCheckbox.checked) {
-          startButton.disabled = false;
-          localStorage.setItem('privacyAccepted', 'true');
-          logAction('privacy', 0, 'accept', true, {});
-        } else {
-          startButton.disabled = true;
-          localStorage.removeItem('privacyAccepted');
-          logAction('privacy', 0, 'uncheck', false, {});
-        }
-      });
-
-      // Start button event listener
-      startButton.addEventListener('click', () => {
-        console.log('Start button clicked, privacyAccepted:', privacyCheckbox.checked);
-        if (privacyCheckbox.checked) {
-          startButton.style.display = 'none';
-          privacyContainer.style.display = 'none';
-          document.getElementById('game-menu').style.display = 'grid';
-          document.getElementById('game-area').style.display = 'none';
-          logAction('game', 0, 'start_menu', true, {});
-        } else {
-          alert('Please accept the Privacy Policy to proceed.');
-          logAction('game', 0, 'start_menu_attempt', false, {});
-        }
-      });
 
       // Game logic for Pattern Recognition
       let currentGame = null;
@@ -340,7 +297,7 @@
 
       function selectGame(gameId) {
         if (localStorage.getItem('privacyAccepted') !== 'true') {
-          alert('Please accept the Privacy Policy to proceed.');
+          alert('Please agree to the Privacy Policy by clicking Start.');
           return;
         }
         currentGame = gameId;
