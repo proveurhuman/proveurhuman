@@ -184,7 +184,9 @@
   </footer>
 
   <script>
-    console.log('Script loaded');
+    console.log('Script loaded at', new Date().toLocaleString());
+
+    // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM fully loaded');
 
@@ -195,22 +197,28 @@
       const gameArea = document.querySelector('#game-area');
 
       // Debug: Check if elements are found
-      if (!startButton) console.error('Start button not found');
-      if (!privacyNotice) console.error('Privacy notice not found');
-      if (!gameMenu) console.error('Game menu not found');
-      if (!gameArea) console.error('Game area not found');
+      console.log('Start button:', startButton ? 'Found' : 'Not found');
+      console.log('Privacy notice:', privacyNotice ? 'Found' : 'Not found');
+      console.log('Game menu:', gameMenu ? 'Found' : 'Not found');
+      console.log('Game area:', gameArea ? 'Found' : 'Not found');
 
       // Start button logic
       if (startButton) {
         startButton.addEventListener('click', () => {
-          console.log('Start button clicked');
-          localStorage.setItem('privacyAccepted', 'true');
-          startButton.style.display = 'none';
-          privacyNotice.style.display = 'none';
-          gameMenu.style.display = 'grid';
-          gameArea.style.display = 'none';
-          console.log('Game menu displayed');
+          console.log('Start button clicked at', new Date().toLocaleString());
+          try {
+            localStorage.setItem('privacyAccepted', 'true');
+            startButton.style.display = 'none';
+            privacyNotice.style.display = 'none';
+            gameMenu.style.display = 'grid';
+            gameArea.style.display = 'none';
+            console.log('Game menu displayed');
+          } catch (err) {
+            console.error('Error in start button handler:', err);
+          }
         });
+      } else {
+        console.error('Start button not found, cannot attach event listener');
       }
 
       // Initialize page state
@@ -227,163 +235,6 @@
         gameMenu.style.display = 'none';
         gameArea.style.display = 'none';
       }
-
-      // Game progress
-      let gameProgress = JSON.parse(localStorage.getItem('gameProgress')) || {
-        'pattern-recognition': { level: 1, unlocked: true },
-        'image-distortion': { level: 1, unlocked: false },
-        'audio-tone': { level: 1, unlocked: false },
-        'visual-memory': { level: 1, unlocked: false },
-        'reaction-time': { level: 1, unlocked: false },
-        'captcha-puzzle': { level: 1, unlocked: false },
-        'logical-reasoning': { level: 1, unlocked: false },
-        'color-gradient': { level: 1, unlocked: false },
-        'shape-rotation': { level: 1, unlocked: false },
-        'sequence-prediction': { level: 1, unlocked: false }
-      };
-
-      // Update game menu based on progress
-      function updateGameMenu() {
-        console.log('Updating game menu');
-        document.querySelectorAll('.game-button').forEach(button => {
-          const gameId = button.dataset.game;
-          button.disabled = !gameProgress[gameId].unlocked;
-        });
-      }
-
-      // Save progress to localStorage
-      function saveProgress() {
-        console.log('Saving progress');
-        localStorage.setItem('gameProgress', JSON.stringify(gameProgress));
-        updateGameMenu();
-      }
-
-      // Game logic for Pattern Recognition
-      let currentGame = null;
-      let currentLevel = 1;
-      let score = 0;
-      let gameActive = false;
-      let pattern = null;
-      let timeoutId = null;
-      const canvas = document.querySelector('#game-canvas');
-      const ctx = canvas.getContext('2d');
-      const stopButton = document.querySelector('#stop-button');
-
-      function selectGame(gameId) {
-        console.log('Selecting game:', gameId);
-        if (localStorage.getItem('privacyAccepted') !== 'true') {
-          alert('Please agree to the Privacy Policy by clicking Start.');
-          return;
-        }
-        currentGame = gameId;
-        currentLevel = gameProgress[gameId].level;
-        gameMenu.style.display = 'none';
-        gameArea.style.display = 'block';
-        document.querySelector('#game-title').textContent = gameId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        document.querySelector('#level-display').textContent = `Level ${currentLevel}`;
-        document.querySelector('#score-display').textContent = `Score: ${score}`;
-        if (gameId === 'pattern-recognition') {
-          setupPatternRecognition();
-        } else {
-          console.log(`Game ${gameId} not implemented yet`);
-          alert(`Game "${gameId}" is not implemented yet. Please try Pattern Recognition.`);
-        }
-      }
-
-      function setupPatternRecognition() {
-        console.log('Setting up Pattern Recognition, level:', currentLevel);
-        canvas.innerHTML = '';
-        pattern = generatePattern(currentLevel);
-        drawPattern(pattern);
-        stopButton.onclick = stopGame;
-        canvas.onclick = (e) => handlePatternClick(e, pattern);
-        gameActive = true;
-        const timeLimit = 10000 - currentLevel * 1000;
-        timeoutId = setTimeout(() => {
-          if (gameActive) {
-            score = Math.max(0, score - 5);
-            document.querySelector('#score-display').textContent = `Score: ${score}`;
-            setupPatternRecognition();
-          }
-        }, timeLimit);
-      }
-
-      function generatePattern(level) {
-        const size = 3 + Math.floor(level / 3);
-        const pattern = [];
-        for (let i = 0; i < size * size; i++) {
-          pattern.push(Math.random() > 0.5 ? '#f107a3' : '#7b2ff7');
-        }
-        return { size, colors: pattern, correct: pattern[Math.floor(Math.random() * pattern.length)] };
-      }
-
-      function drawPattern(pattern) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const cellSize = canvas.width / pattern.size;
-        for (let i = 0; i < pattern.colors.length; i++) {
-          const x = (i % pattern.size) * cellSize;
-          const y = Math.floor(i / pattern.size) * cellSize;
-          ctx.fillStyle = pattern.colors[i];
-          ctx.fillRect(x, y, cellSize - 2, cellSize - 2);
-        }
-      }
-
-      function handlePatternClick(e, pattern) {
-        if (!gameActive) return;
-        clearTimeout(timeoutId);
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const cellSize = canvas.width / pattern.size;
-        const col = Math.floor(x / cellSize);
-        const row = Math.floor(y / cellSize);
-        const index = row * pattern.size + col;
-        const selectedColor = pattern.colors[index];
-        const success = selectedColor === pattern.correct;
-        if (success) {
-          score += 10;
-          if (currentLevel < 10) {
-            currentLevel++;
-            gameProgress[currentGame].level = currentLevel;
-            if (currentLevel === 10) {
-              unlockNextGame();
-            }
-            saveProgress();
-            setupPatternRecognition();
-          } else {
-            alert('Game Completed!');
-            stopGame();
-          }
-        } else {
-          score = Math.max(0, score - 5);
-          setupPatternRecognition();
-        }
-        document.querySelector('#score-display').textContent = `Score: ${score}`;
-        document.querySelector('#level-display').textContent = `Level ${currentLevel}`;
-      }
-
-      function unlockNextGame() {
-        console.log('Unlocking next game');
-        const games = Object.keys(gameProgress);
-        const currentIndex = games.indexOf(currentGame);
-        if (currentIndex < games.length - 1) {
-          gameProgress[games[currentIndex + 1]].unlocked = true;
-        }
-        saveProgress();
-      }
-
-      function stopGame() {
-        console.log('Stopping game');
-        clearTimeout(timeoutId);
-        gameActive = false;
-        gameMenu.style.display = 'grid';
-        gameArea.style.display = 'none';
-      }
-
-      // Initialize game buttons
-      document.querySelectorAll('.game-button').forEach(button => {
-        button.addEventListener('click', () => selectGame(button.dataset.game));
-      });
     });
   </script>
 </body>
