@@ -171,7 +171,7 @@
 
   <main>
     <p>Are you ready to take on the challenge and beat the system?</p>
-    <button class="start-btn" onclick="startGame()">Start</button>
+    <button class="start-btn" id="start-button">Start</button>
     <div class="game-menu" id="game-menu">
       <button class="game-button" data-game="pattern-recognition">Pattern Recognition</button>
       <button class="game-button" data-game="image-distortion" disabled>Image Distortion</button>
@@ -286,11 +286,12 @@
     const acceptBtn = document.getElementById('acceptPrivacyBtn');
     const viewBtn = document.getElementById('viewPrivacyBtn');
     const declineBtn = document.getElementById('declinePrivacyBtn');
+    const startButton = document.getElementById('start-button');
 
     function startGame() {
       if (localStorage.getItem('privacyAccepted') === 'true') {
+        document.getElementById('start-button').style.display = 'none';
         document.getElementById('game-menu').style.display = 'grid';
-        document.querySelector('.start-btn').style.display = 'none';
         logAction('game', 0, 'start_menu', true, {});
       } else {
         privacyModal.style.display = 'flex';
@@ -300,12 +301,14 @@
     acceptBtn.addEventListener('click', () => {
       localStorage.setItem('privacyAccepted', 'true');
       privacyModal.style.display = 'none';
-      startGame();
+      document.getElementById('start-button').style.display = 'none';
+      document.getElementById('game-menu').style.display = 'grid';
       logAction('privacy', 0, 'accept', true, {});
     });
 
     viewBtn.addEventListener('click', () => {
       window.open('privacy.html', '_blank', 'noopener,noreferrer');
+      logAction('privacy', 0, 'view', true, {});
     });
 
     declineBtn.addEventListener('click', () => {
@@ -313,6 +316,18 @@
       alert("You must accept the Privacy Policy to play the game.");
       logAction('privacy', 0, 'decline', false, {});
     });
+
+    // Initialize page state
+    function initializePage() {
+      if (localStorage.getItem('privacyAccepted') === 'true') {
+        document.getElementById('start-button').style.display = 'block';
+        document.getElementById('game-menu').style.display = 'none';
+      } else {
+        document.getElementById('start-button').style.display = 'block';
+        document.getElementById('game-menu').style.display = 'none';
+      }
+      updateGameMenu();
+    }
 
     // Game logic for Pattern Recognition
     let currentGame = null;
@@ -442,13 +457,11 @@
     }
 
     // Initialize
-    if (localStorage.getItem('privacyAccepted') === 'true') {
-      document.querySelector('.start-btn').style.display = 'block';
-    }
-    updateGameMenu();
+    initializePage();
     document.querySelectorAll('.game-button').forEach(button => {
       button.onclick = () => selectGame(button.dataset.game);
     });
+    startButton.onclick = startGame;
   </script>
 </body>
 </html>
