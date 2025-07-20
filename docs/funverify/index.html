@@ -152,7 +152,35 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+
   <script>
+    // Replace these values with your Firebase project config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "proveurhuman-12wqe.firebaseapp.com",
+      databaseURL: "https://proveurhuman-12wqe-default-rtdb.firebaseio.com",
+      projectId: "proveurhuman-12wqe",
+      storageBucket: "proveurhuman-12wqe.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Save data example function (you can customize this)
+    function saveUserData(data) {
+      const ref = database.ref('userData');
+      ref.push(data)
+        .then(() => console.log('Data saved successfully!'))
+        .catch(err => console.error('Error saving data:', err));
+    }
+
+    // Privacy Modal logic
     const privacyModal = document.getElementById('privacyModal');
     const acceptBtn = document.getElementById('acceptPrivacyBtn');
     const viewBtn = document.getElementById('viewPrivacyBtn');
@@ -161,7 +189,11 @@
     function startGame() {
       if (localStorage.getItem('privacyAccepted') === 'true') {
         alert("Level system not implemented yet. Stay tuned!");
-        // future: window.location.href = "/funverify/level1.html";
+        // TODO: Here you can redirect to the first game level page if implemented
+        // window.location.href = "/funverify/level1.html";
+        
+        // Example: Save test data to Firebase on start
+        saveUserData({ event: 'game_started', timestamp: Date.now() });
       } else {
         privacyModal.style.display = 'flex';
       }
@@ -171,7 +203,7 @@
       localStorage.setItem('privacyAccepted', 'true');
       privacyModal.style.display = 'none';
       alert("Thank you for accepting the Privacy Policy. The game will start now.");
-      // future: window.location.href = "/funverify/level1.html";
+      startGame();
     });
 
     viewBtn.addEventListener('click', () => {
