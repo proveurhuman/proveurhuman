@@ -292,42 +292,52 @@
       if (localStorage.getItem('privacyAccepted') === 'true') {
         document.getElementById('start-button').style.display = 'none';
         document.getElementById('game-menu').style.display = 'grid';
+        document.getElementById('game-area').style.display = 'none';
         logAction('game', 0, 'start_menu', true, {});
       } else {
         privacyModal.style.display = 'flex';
       }
     }
 
-    acceptBtn.addEventListener('click', () => {
+    function handleAcceptPrivacy() {
       localStorage.setItem('privacyAccepted', 'true');
       privacyModal.style.display = 'none';
       document.getElementById('start-button').style.display = 'none';
       document.getElementById('game-menu').style.display = 'grid';
+      document.getElementById('game-area').style.display = 'none';
       logAction('privacy', 0, 'accept', true, {});
-    });
+    }
 
-    viewBtn.addEventListener('click', () => {
+    function handleViewPrivacy() {
       window.open('privacy.html', '_blank', 'noopener,noreferrer');
       logAction('privacy', 0, 'view', true, {});
-    });
+    }
 
-    declineBtn.addEventListener('click', () => {
+    function handleDeclinePrivacy() {
       privacyModal.style.display = 'none';
       alert("You must accept the Privacy Policy to play the game.");
       logAction('privacy', 0, 'decline', false, {});
-    });
+    }
 
     // Initialize page state
     function initializePage() {
       if (localStorage.getItem('privacyAccepted') === 'true') {
         document.getElementById('start-button').style.display = 'block';
         document.getElementById('game-menu').style.display = 'none';
+        document.getElementById('game-area').style.display = 'none';
       } else {
         document.getElementById('start-button').style.display = 'block';
         document.getElementById('game-menu').style.display = 'none';
+        document.getElementById('game-area').style.display = 'none';
       }
       updateGameMenu();
     }
+
+    // Attach event listeners
+    acceptBtn.addEventListener('click', handleAcceptPrivacy);
+    viewBtn.addEventListener('click', handleViewPrivacy);
+    declineBtn.addEventListener('click', handleDeclinePrivacy);
+    startButton.addEventListener('click', startGame);
 
     // Game logic for Pattern Recognition
     let currentGame = null;
@@ -459,9 +469,8 @@
     // Initialize
     initializePage();
     document.querySelectorAll('.game-button').forEach(button => {
-      button.onclick = () => selectGame(button.dataset.game);
+      button.addEventListener('click', () => selectGame(button.dataset.game));
     });
-    startButton.onclick = startGame;
   </script>
 </body>
 </html>
