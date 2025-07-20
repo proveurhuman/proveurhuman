@@ -159,7 +159,7 @@
 
   <main>
     <p>Are you ready to take on the challenge and beat the system?</p>
-    <div class="privacy-container">
+    <div class="privacy-container" id="privacy-container">
       <input type="checkbox" id="privacyCheckbox">
       <label for="privacyCheckbox">I accept the <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a></label>
     </div>
@@ -252,12 +252,12 @@
       }
 
       // Log user action to Firebase
-      function logAction(gameId, Powerlevel, action, success, details) {
+      function logAction(gameId, level, action, success, details) {
         const ref = database.ref('user_actions');
         ref.push({
           userId: userId,
           gameId: gameId,
-          level: Powerlevel,
+          level: level,
           action: action,
           success: success,
           timestamp: Date.now(),
@@ -268,8 +268,10 @@
       // Privacy Checkbox logic
       const privacyCheckbox = document.getElementById('privacyCheckbox');
       const startButton = document.getElementById('start-button');
+      const privacyContainer = document.getElementById('privacy-container');
 
       function checkPrivacyStatus() {
+        console.log('Checkbox changed, checked:', privacyCheckbox.checked);
         if (privacyCheckbox.checked) {
           startButton.disabled = false;
           localStorage.setItem('privacyAccepted', 'true');
@@ -282,31 +284,34 @@
       }
 
       function startGame() {
+        console.log('Start button clicked');
         if (privacyCheckbox.checked) {
-          document.getElementById('start-button').style.display = 'none';
-          document.getElementById('privacy-container').style.display = 'none';
+          startButton.style.display = 'none';
+          privacyContainer.style.display = 'none';
           document.getElementById('game-menu').style.display = 'grid';
           document.getElementById('game-area').style.display = 'none';
           logAction('game', 0, 'start_menu', true, {});
         } else {
           alert('Please accept the Privacy Policy to proceed.');
+          logAction('game', 0, 'start_menu_attempt', false, {});
         }
       }
 
       // Initialize page state
       function initializePage() {
+        console.log('Initializing page, privacyAccepted:', localStorage.getItem('privacyAccepted'));
         if (localStorage.getItem('privacyAccepted') === 'true') {
           privacyCheckbox.checked = true;
           startButton.disabled = false;
-          document.getElementById('start-button').style.display = 'block';
-          document.getElementById('privacy-container').style.display = 'flex';
+          startButton.style.display = 'block';
+          privacyContainer.style.display = 'flex';
           document.getElementById('game-menu').style.display = 'none';
           document.getElementById('game-area').style.display = 'none';
         } else {
           privacyCheckbox.checked = false;
           startButton.disabled = true;
-          document.getElementById('start-button').style.display = 'block';
-          document.getElementById('privacy-container').style.display = 'flex';
+          startButton.style.display = 'block';
+          privacyContainer.style.display = 'flex';
           document.getElementById('game-menu').style.display = 'none';
           document.getElementById('game-area').style.display = 'none';
         }
@@ -314,8 +319,16 @@
       }
 
       // Attach event listeners
-      privacyCheckbox.addEventListener('change', checkPrivacyStatus);
-      startButton.addEventListener('click', startGame);
+      if (privacyCheckbox) {
+        privacyCheckbox.addEventListener('change', checkPrivacyStatus);
+      } else {
+        console.error('Privacy checkbox not found');
+      }
+      if (startButton) {
+        startButton.addEventListener('click', startGame);
+      } else {
+        console.error('Start button not found');
+      }
 
       // Game logic for Pattern Recognition
       let currentGame = null;
