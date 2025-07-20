@@ -86,5 +86,49 @@
       // window.location.href = "/funverify/level1.html";
     }
   </script>
+<!-- Modal for Privacy Policy Acceptance -->
+<div id="privacyModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.8); color:#fff; display:flex; flex-direction: column; justify-content:center; align-items:center; z-index:1000; padding:20px; box-sizing:border-box;">
+  <div style="background:#222; padding:20px; border-radius:8px; max-width:400px; text-align:center;">
+    <h2>Privacy Policy Acceptance</h2>
+    <p>To proceed, please read and accept our <a href="privacy.html" target="_blank" style="color:#6cf; text-decoration:underline;">Privacy Policy</a>.</p>
+    <button id="acceptPrivacyBtn" style="margin:10px; padding:10px 20px; font-size:1rem; cursor:pointer;">I Accept</button>
+    <button id="viewPrivacyBtn" style="margin:10px; padding:10px 20px; font-size:1rem; cursor:pointer;">View Privacy Policy</button>
+    <button id="declinePrivacyBtn" style="margin:10px; padding:10px 20px; font-size:1rem; cursor:pointer; background:#a33; color:#fff; border:none; border-radius:4px; cursor:pointer;">Decline</button>
+  </div>
+</div>
+
+<script>
+  const privacyModal = document.getElementById('privacyModal');
+  const acceptBtn = document.getElementById('acceptPrivacyBtn');
+  const viewBtn = document.getElementById('viewPrivacyBtn');
+  const declineBtn = document.getElementById('declinePrivacyBtn');
+
+  function startGame() {
+    if (localStorage.getItem('privacyAccepted') === 'true') {
+      // Privacy accepted, start the game normally
+      alert("Level system not implemented yet. Stay tuned!");
+      // window.location.href = "/funverify/level1.html"; // future redirect
+    } else {
+      // Show privacy modal to accept terms first
+      privacyModal.style.display = 'flex';
+    }
+  }
+
+  acceptBtn.addEventListener('click', () => {
+    localStorage.setItem('privacyAccepted', 'true');
+    privacyModal.style.display = 'none';
+    alert("Thank you for accepting the Privacy Policy. The game will start now.");
+    // window.location.href = "/funverify/level1.html"; // future redirect
+  });
+
+  viewBtn.addEventListener('click', () => {
+    window.open('privacy.html', '_blank', 'noopener,noreferrer');
+  });
+
+  declineBtn.addEventListener('click', () => {
+    privacyModal.style.display = 'none';
+    alert("You must accept the Privacy Policy to play the game.");
+  });
+</script>
 </body>
 </html>
